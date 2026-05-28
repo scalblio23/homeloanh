@@ -877,15 +877,17 @@ src="https://www.facebook.com/tr?id=1977675273118337&ev=PageView&noscript=1"/></
     Object.assign(answers, saved.answers);
     if (urlAmount) answers.loanAmount = urlAmount;
     stepHistory = saved.stepHistory || ['location'];
-    // Don't auto-resume into loading or DQ — restart from the step before
+    // Don't auto-resume onto the final contact form or the loading screen —
+    // drop the user back to the last question they actually answered.
     let target = saved.currentStep;
-    if (target === 'loading') {
-      // user closed during the simulated loading; just rerun it
-      showStep('loading');
-      runLoading();
-    } else {
-      showStep(target);
+    if (target === 'success' || target === 'loading') {
+      const NON_QUESTION = ['loading', 'success', 'submitted', 'dq'];
+      const lastQuestion = [...stepHistory].reverse().find(s => !NON_QUESTION.includes(s));
+      target = lastQuestion || 'location';
+      const idx = stepHistory.lastIndexOf(target);
+      if (idx !== -1) stepHistory = stepHistory.slice(0, idx + 1);
     }
+    showStep(target);
     restoreFormFields();
   } else {
     showStep('location');
